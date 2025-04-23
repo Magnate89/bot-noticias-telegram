@@ -1,6 +1,4 @@
 python-telegram-bot==20.6
-flask
-feedparser
-apscheduler
-httpx
-telegram
+flask==2.2.2
+feedparser==6.0.10
+apscheduler==3.9.1
