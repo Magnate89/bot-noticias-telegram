@@ -3,6 +3,5 @@ flask==2.2.2
 feedparser==6.0.10
 apscheduler==3.9.1
 
-# update
+# Forzar nuevo deploy
 
-Forzar deploy desde GitHub
