@@ -6,7 +6,7 @@ import threading
 from flask import Flask
 from apscheduler.schedulers.background import BackgroundScheduler
 from telegram import Update
-from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
+from telegram.ext import Application, CommandHandler
 
 # ====== CONFIGURACIÓN ======
 try:
@@ -137,6 +137,10 @@ if __name__ == '__main__':
         kwargs={'host': '0.0.0.0', 'port': 8080},
         daemon=True
     ).start()
+
+    if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)  # Para Flask
 
     # Iniciar bot principal
     try:
