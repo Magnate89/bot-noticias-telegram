@@ -1,13 +1,18 @@
-[project]
-name = "python-template"
+[tool.poetry]
+name = "bot-noticias-telegram"
 version = "0.1.0"
-description = ""
+description = "Bot de Telegram para noticias"
 authors = ["Your Name <you@example.com>"]
-requires-python = ">=3.11"
-dependencies = [
-    "apscheduler>=3.11.0",
-    "feedparser>=6.0.11",
-    "flask>=3.1.0",
-    "googletrans>=4.0.2",
-    "telegram>=0.0.1",
-]
+readme = "README.md"  # Opcional pero recomendado
+
+[tool.poetry.dependencies]
+python = ">=3.11"
+python-telegram-bot = "^20.0"  # ¡Paquete oficial y actualizado!
+apscheduler = "^3.11.0"
+feedparser = "^6.0.11"
+flask = "^3.1.0"  # Solo necesario si usas webhooks
+googletrans = "^4.0.2"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
