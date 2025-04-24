@@ -2,40 +2,33 @@ import os
 import logging
 import asyncio
 import feedparser
-import threading
-from flask import Flask
 from apscheduler.schedulers.background import BackgroundScheduler
 from telegram import Update
-from telegram.ext import Application, CommandHandler
+from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 
 # ====== CONFIGURACIÓN ======
-try:
-    BOT_TOKEN = os.environ['BOT_TOKEN']
-    CHAT_ID = os.environ['CHAT_ID']
-except KeyError as e:
-    logging.error("❌ Error: Configura BOT_TOKEN y CHAT_ID en Secrets")
-    raise RuntimeError("Variables de entorno faltantes")
+BOT_TOKEN = os.getenv('BOT_TOKEN')  # Render usa getenv() para variables
+CHAT_ID = os.getenv('CHAT_ID')
+
+if not BOT_TOKEN or not CHAT_ID:
+    logging.error("❌ Error: Configura BOT_TOKEN y CHAT_ID en Render (Environment Variables)")
+    exit(1)
 
 # Configuración de logging
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
+logging.getLogger("httpx").setLevel(logging.WARNING)  # Reduce logs de HTTP
 
-# Ocultar logs sensibles de httpx
-logging.getLogger("httpx").setLevel(logging.WARNING)
-
-
-# Palabras clave y fuentes
+# Palabras clave y fuentes RSS
 PALABRAS_CLAVE = ['crypto', 'bitcoin', 'ethereum', 'web3', 'blockchain', 'airdrop']
 FUENTES_RSS = [
     'https://decrypt.co/feed',
     'https://cointelegraph.com/rss',
     'https://www.coindesk.com/arc/outboundfeeds/rss/',
 ]
-
-# Variables globales para control
-noticias_enviadas = set()
+noticias_enviadas = set()  # Almacena enlaces para evitar duplicados
 
 # ====== FUNCIONES PRINCIPALES ======
 def obtener_noticias():
@@ -46,37 +39,30 @@ def obtener_noticias():
         try:
             feed = feedparser.parse(url)
             if not hasattr(feed, 'entries') or not feed.entries:
-                logging.warning(f"Feed vacío o sin entradas: {url}")
+                logging.warning(f"Feed vacío: {url}")
                 continue
 
             contador_fuente = 0
             for entrada in feed.entries:
-                if contador_fuente >= 2:  # Máximo 2 por fuente
+                if contador_fuente >= 2:  # Límite de 2 noticias por fuente
                     break
 
-                try:
-                    enlace = entrada.get('link', '')
-                    titulo = entrada.get('title', '').lower()
-                    resumen = entrada.get('summary', '').lower()
+                enlace = entrada.get('link', '')
+                titulo = entrada.get('title', '').lower()
+                resumen = entrada.get('summary', '').lower()
 
-                    # CORRECCIÓN DEL ERROR: Paréntesis bien balanceados
-                    if (any(palabra in titulo or palabra in resumen for palabra in PALABRAS_CLAVE) 
-                        and enlace not in noticias_enviadas):
+                if (any(palabra in titulo or palabra in resumen for palabra in PALABRAS_CLAVE)
+                    and enlace not in noticias_enviadas:
 
-                        noticia_formateada = f"📰 <a href='{enlace}'>{entrada.title}</a>"
-                        noticias_filtradas.append(noticia_formateada)
-                        noticias_enviadas.add(enlace)
-                        contador_fuente += 1
-
-                except Exception as e:
-                    logging.error(f"Error procesando entrada: {str(e)}")
-                    continue
+                    noticia_formateada = f"📰 <a href='{enlace}'>{entrada.title}</a>"
+                    noticias_filtradas.append(noticia_formateada)
+                    noticias_enviadas.add(enlace)
+                    contador_fuente += 1
 
         except Exception as e:
-            logging.error(f"Error al parsear feed {url}: {str(e)}")
-            continue
+            logging.error(f"Error al parsear {url}: {str(e)}")
 
-    return noticias_filtradas[:5]  # Límite global
+    return noticias_filtradas[:5]  # Máximo 5 noticias por ejecución
 
 async def enviar_noticias_automaticas(app):
     try:
@@ -89,6 +75,7 @@ async def enviar_noticias_automaticas(app):
                 parse_mode="HTML",
                 disable_web_page_preview=True
             )
+            logging.info("✅ Noticias enviadas automáticamente")
     except Exception as e:
         logging.error(f"Error al enviar noticias: {str(e)}")
 
@@ -98,28 +85,23 @@ async def comando_noticias(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if noticias:
             mensaje = "📢 <b>Últimas noticias cripto</b>\n\n" + "\n\n".join(noticias)
             await update.message.reply_text(
-                mensaje,
+                text=mensaje,
                 parse_mode="HTML",
                 disable_web_page_preview=True
             )
         else:
-            await update.message.reply_text("⚠️ No hay noticias relevantes disponibles ahora.")
+            await update.message.reply_text("⚠️ No hay noticias nuevas ahora.")
     except Exception as e:
-        logging.error(f"Error en comando /noticias: {str(e)}")
-        await update.message.reply_text("❌ Ocurrió un error al obtener las noticias.")
-
-# ====== CONFIGURACIÓN FLASK ======
-app_flask = Flask(__name__)
-
-@app_flask.route('/')
-def home():
-    return "🤖 Bot de Noticias Cripto - Operativo"
+        logging.error(f"Error en /noticias: {str(e)}")
+        await update.message.reply_text("❌ Error al obtener noticias")
 
 # ====== INICIALIZACIÓN ======
 def main():
+    # Configura el bot de Telegram
     application = ApplicationBuilder().token(BOT_TOKEN).build()
     application.add_handler(CommandHandler("noticias", comando_noticias))
 
+    # Programa el envío automático (8AM, 1PM, 8PM UTC)
     scheduler = BackgroundScheduler()
     scheduler.add_job(
         lambda: asyncio.run(enviar_noticias_automaticas(application)),
@@ -128,22 +110,12 @@ def main():
     )
     scheduler.start()
 
+    # Inicia el bot en modo polling
+    logging.info("🤖 Bot iniciado (Polling)...")
     application.run_polling()
 
 if __name__ == '__main__':
-    # Hilo para Flask
-    threading.Thread(
-        target=app_flask.run,
-        kwargs={'host': '0.0.0.0', 'port': 8080},
-        daemon=True
-    ).start()
-
-    if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)  # Para Flask
-
-    # Iniciar bot principal
     try:
         main()
     except Exception as e:
-        logging.error(f"Error fatal: {str(e)}")
+        logging.critical(f"❌ Error fatal: {str(e)}")
