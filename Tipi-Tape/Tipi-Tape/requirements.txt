@@ -1,4 +1,6 @@
-python-telegram-bot==20.6
-flask==2.2.2
+python-telegram-bot==20.3
 feedparser==6.0.10
-apscheduler==3.9.1
+Flask==2.3.2
+apscheduler==3.10.1
+httpx==0.25.0
+python-dotenv==1.0.0  # Opcional para desarrollo local
