@@ -108,13 +108,6 @@ async def comando_noticias(update: Update, context: ContextTypes.DEFAULT_TYPE):
         logging.error(f"Error en comando /noticias: {str(e)}")
         await update.message.reply_text("❌ Ocurrió un error al obtener las noticias.")
 
-# ====== CONFIGURACIÓN FLASK ======
-app_flask = Flask(__name__)
-
-@app_flask.route('/')
-def home():
-    return "🤖 Bot de Noticias Cripto - Operativo"
-
 # ====== INICIALIZACIÓN ======
 def main():
     application = ApplicationBuilder().token(BOT_TOKEN).build()
@@ -129,17 +122,3 @@ def main():
     scheduler.start()
 
     application.run_polling()
-
-if __name__ == '__main__':
-    # Hilo para Flask
-    threading.Thread(
-        target=app_flask.run,
-        kwargs={'host': '0.0.0.0', 'port': 8080},
-        daemon=True
-    ).start()
-
-    # Iniciar bot principal
-    try:
-        main()
-    except Exception as e:
-        logging.error(f"Error fatal: {str(e)}")
