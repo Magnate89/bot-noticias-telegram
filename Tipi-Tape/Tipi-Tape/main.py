@@ -122,7 +122,9 @@ def main():
     scheduler.start()
 
     application.run_polling()
-
+    
+if __name__ == '__main__':
+    
 # Iniciar bot principal
     try:
         main()
