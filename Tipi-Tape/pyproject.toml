@@ -1,17 +1,16 @@
 [tool.poetry]
 name = "bot-noticias-telegram"
 version = "0.1.0"
-description = "Bot de Telegram para noticias"
-authors = ["Your Name <you@example.com>"]
-readme = "README.md"  # Opcional pero recomendado
+description = "Bot de Telegram para noticias cripto"
+authors = ["Tu Nombre <tu@email.com>"]
+readme = "README.md"
 
 [tool.poetry.dependencies]
-python = ">=3.11"
-python-telegram-bot = "^20.0"  # ¡Paquete oficial y actualizado!
-apscheduler = "^3.11.0"
+python = "^3.11"
+python-telegram-bot = "^20.0"
 feedparser = "^6.0.11"
-flask = "^3.1.0"  # Solo necesario si usas webhooks
-googletrans = "^4.0.2"
+apscheduler = "^3.11.0"
+flask = "^3.1.0"  # Opcional (solo si usas webhooks luego)
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
