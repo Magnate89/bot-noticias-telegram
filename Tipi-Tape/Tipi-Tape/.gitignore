@@ -1,0 +1,36 @@
+# Archivos de entorno (nunca subir tokens o claves a GitHub)
+.env
+.env.local
+.env*.local
+
+# Entornos virtuales de Python
+venv/
+env/
+.venv/
+
+# Archivos de caché de Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Archivos de IDE/Editor
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Logs y datos de desarrollo
+*.log
+*.sqlite3
+
+# Archivos generados por el sistema
+.DS_Store
+Thumbs.db
+
+# Archivos de Poetry (si los usas)
+poetry.lock
+pyproject.toml  # Solo si no lo necesitas en producción
+
+# Archivos específicos de tu proyecto (opcional, si existen)
+/database/
+/temp/
