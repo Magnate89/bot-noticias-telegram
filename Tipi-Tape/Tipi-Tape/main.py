@@ -122,3 +122,9 @@ def main():
     scheduler.start()
 
     application.run_polling()
+
+# Iniciar bot principal
+    try:
+        main()
+    except Exception as e:
+        logging.error(f"Error fatal: {str(e)}")
